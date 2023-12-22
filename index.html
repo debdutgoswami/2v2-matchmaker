@@ -43,14 +43,6 @@
             max-width: 50px;
             min-width: 50px;
             }
-            /* Style for the copyright text */
-            .copyright {
-            position: fixed;
-            bottom: 10px;
-            width: 100%;
-            color: #6c757d;
-            text-align: center;
-            }
         </style>
     </head>
     <body>
@@ -100,25 +92,23 @@
                 <button id="share-button" class="btn btn-success" onclick="downloadTableImage()">Download as Image</button>
             </div>
         </div>
-        <!-- Copyright text -->
-        <footer>
-            <p class="copyright"><small>&copy; 2023 Debdut Goswami. All rights reserved.</small></p>
-        </footer>
         <!-- Include Bootstrap JS and Popper.js -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
             // Function to save data to sessionStorage
             function saveDataToSessionStorage(key, data) {
+                console.log(key)
+                console.log(data)
                 sessionStorage.setItem(key, JSON.stringify(data));
             }
-
+            
             // Function to retrieve data from sessionStorage
             function getDataFromSessionStorage(key) {
                 const data = sessionStorage.getItem(key);
                 return data ? JSON.parse(data) : null;
             }
-
-            function addNameField() {
+            
+            function addNameField(name=null) {
                 let nameFieldsContainer = document.getElementById('nameFields');
                 let nameFieldDiv = document.createElement('div');
                 nameFieldDiv.className = 'col-12 col-md-6 offset-md-3';
@@ -129,6 +119,9 @@
                 input.className = 'form-control';
                 input.name = 'name[]';
                 input.placeholder = 'Enter a name';
+                if (name != null) {
+                    input.value = name;
+                }
                 let deleteButton = document.createElement('button');
                 deleteButton.className = 'btn btn-danger delete-btn';
                 deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
@@ -139,86 +132,84 @@
                 inputGroup.appendChild(deleteButton);
                 nameFieldDiv.appendChild(inputGroup);
                 nameFieldsContainer.appendChild(nameFieldDiv);
-
+            
                 updateDeleteButtonStatus();
             }
-
+            
             function deleteNameField(nameFieldDiv) {
                 let nameFieldsContainer = document.getElementById('nameFields');
                 if (nameFieldsContainer.contains(nameFieldDiv)) {
                     nameFieldsContainer.removeChild(nameFieldDiv);
                 }
-
+            
                 updateDeleteButtonStatus();
             }
-
+            
             function updateDeleteButtonStatus() {
                 let deleteButtons = document.querySelectorAll('.delete-btn');
                 let nameFields = document.querySelectorAll('.name-field');
-
+            
                 deleteButtons.forEach(function(button, _) {
                     button.disabled = nameFields.length <= 3;
                 });
             }
-
+            
             function submitForm() {
                 let nameInputs = document.getElementsByName('name[]');
                 if (nameInputs.length < 3){
                     alert('Please fill in atleast 3 names before submitting.');
                 }
                 let names = [];
-
+            
                 for (let i = 0; i < nameInputs.length; i++) {
                     names.push(nameInputs[i].value.trim());
                 }
-
+            
                 let isFilled = names.every(function(name) {
                     return name !== '';
                 });
-
+            
                 if (isFilled) {
+                    saveDataToSessionStorage('names', names);
                     // Create teams with two members each
                     let teams = createTeams(names);
+                    saveDataToSessionStorage('teams', teams);
                     // Assign matches between the teams
                     let matches = assignMatches(teams);
-
+                    saveDataToSessionStorage('matches', matches);
+            
                     let currentDatetime = new Date();
                     let formattedDatetime = currentDatetime.toLocaleString();
-
-                    // Save data to sessionStorage
-                    saveDataToSessionStorage('names', names);
-                    saveDataToSessionStorage('teams', teams);
-                    saveDataToSessionStorage('matches', matches);
                     saveDataToSessionStorage('generatedDatetime', formattedDatetime);
-
+            
                     // Display the teams and matches
                     displayMatches(teams, matches, formattedDatetime);
                 } else {
                     alert('Please fill in all name fields before submitting.');
                 }
             }
-
+            
             function createTeams(names) {
                 // Shuffle the array of names
                 let shuffledNames = names.sort(function() {
                     return 0.5 - Math.random();
                 });
-
+            
                 let teams = [];
                 while (shuffledNames.length > 1) {
                     // Take two names to form a team
                     let team = shuffledNames.splice(0, 2);
                     teams.push(team);
                 }
-
+            
                 // If there is one name left, add a team with a single member
                 if (shuffledNames.length === 1) {
                     teams.push([shuffledNames[0]]);
                 }
-
+            
                 return teams;
             }
-
+            
             function assignMatches(teams) {
                 let matches = [];
                 while (teams.length >= 2) {
@@ -226,40 +217,40 @@
                     let match = teams.splice(0, 2);
                     matches.push(match);
                 }
-
+            
                 // If there is one team left, add a match with that team having no opponent
                 if (teams.length === 1) {
                     matches.push([teams[0]]);
                 }
-
+            
                 return matches;
             }
-
+            
             function displayMatches(teams, matches, formattedDatetime) {
                 let matchesBody = document.getElementById('matches-body');
                 matchesBody.innerHTML = '';
-
+            
                 matches.forEach(function(match, index) {
                     let matchRow = document.createElement('tr');
-
+            
                     let matchCountCell = document.createElement('td');
                     matchCountCell.className = 'thin-column';
                     matchCountCell.textContent = `${index + 1}`;
                     matchRow.appendChild(matchCountCell);
-
+            
                     let teamACell = document.createElement('td');
                     teamACell.textContent = `${match[0].join(' and ')}`;
                     matchRow.appendChild(teamACell);
-
+            
                     let vsCell = document.createElement('td');
                     vsCell.className = 'vs-column thin-column';
                     vsCell.textContent = 'vs';
                     matchRow.appendChild(vsCell);
-
+            
                     let teamBCell = document.createElement('td');
                     teamBCell.textContent = `${match[1] ? match[1].join(' and ') : 'No opponent'}`;
                     matchRow.appendChild(teamBCell);
-
+            
                     matchesBody.appendChild(matchRow);
                 });
                 // Display datetime
@@ -268,49 +259,53 @@
                 // Call the function to check match data availability
                 checkMatchDataAvailability();
             }
-
+            
             function downloadTableImage() {
                 let table = document.getElementById('matches-table');
                 let formattedDate = document.getElementById('datetime-display');
-
+            
                 // Use html2canvas to convert the table to an image
                 html2canvas(table).then(function(canvas) {
                     // Convert canvas to a data URL
                     let imageDataUrl = canvas.toDataURL("image/png");
-
+            
                     // Create a link element to trigger the download
                     let link = document.createElement('a');
                     link.href = imageDataUrl;
                     link.download = `matches-${formattedDate.textContent.split(':').slice(1).join(':')}.png`;
-
+            
                     // Trigger the click event to start the download
                     link.click();
                 });
             }
-
+            
             // Check if match data is available to enable the share button
             function checkMatchDataAvailability() {
                 let matchesBody = document.getElementById('matches-body');
                 let shareButton = document.getElementById('share-button');
-
+            
                 // Enable the share button only if there are matches available
                 shareButton.disabled = matchesBody.children.length === 0;
             }
-
+            
             // On page load, check if there is stored data and display it
             document.addEventListener('DOMContentLoaded', function () {
-                // Add the first five inputs on page load
-                for (let i = 0; i < 3; i++) {
-                    addNameField();
-                }
                 let storedNames = getDataFromSessionStorage('names');
                 let storedTeams = getDataFromSessionStorage('teams');
                 let storedMatches = getDataFromSessionStorage('matches');
                 let generatedDatetime = getDataFromSessionStorage('generatedDatetime');
-
+            
                 if (storedNames && storedTeams && storedMatches) {
+                    let nameInputs = document.getElementsByName('name[]');
+                    // nameInputs.forEach((nameInput) => {deleteNameField(nameInput.parentNode.parentNode)})
+                    storedNames.forEach((storedName) => {addNameField(storedName)})
                     // Display the stored data
                     displayMatches(storedTeams, storedMatches, generatedDatetime);
+                }else{
+                    // Add the first five inputs on page load
+                    for (let i = 0; i < 3; i++) {
+                        addNameField();
+                    }
                 }
                 checkMatchDataAvailability();
             });
