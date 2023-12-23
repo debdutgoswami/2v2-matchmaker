@@ -95,16 +95,16 @@
         <!-- Include Bootstrap JS and Popper.js -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            // Function to save data to sessionStorage
+            // Function to save data to localStorage
             function saveDataToSessionStorage(key, data) {
                 console.log(key)
                 console.log(data)
-                sessionStorage.setItem(key, JSON.stringify(data));
+                localStorage.setItem(key, JSON.stringify(data));
             }
             
-            // Function to retrieve data from sessionStorage
+            // Function to retrieve data from localStorage
             function getDataFromSessionStorage(key) {
-                const data = sessionStorage.getItem(key);
+                const data = localStorage.getItem(key);
                 return data ? JSON.parse(data) : null;
             }
             
